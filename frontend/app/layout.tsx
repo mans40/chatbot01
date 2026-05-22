@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SupportIQ AI — AI-Powered Customer Support Assistant",
+  title: "AuraChat AI — AI-Powered Customer Support Assistant",
   description: "Production-grade AI customer support assistant with RAG, streaming, memory, and analytics.",
 };
 

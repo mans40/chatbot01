@@ -40,7 +40,7 @@ class RAGService:
 
             # Create or get the collection
             self.collection = self.client.get_or_create_collection(
-                name="supportiq_documents",
+                name="aurachat_documents",
                 embedding_function=self.embedding_function
             )
             logger.info("ChromaDB collection initialized successfully.")

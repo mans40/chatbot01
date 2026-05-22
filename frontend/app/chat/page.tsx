@@ -303,7 +303,7 @@ export default function ChatPage() {
                 <Bot className="h-5.5 w-5.5" />
               </div>
               <div>
-                <span className="font-extrabold text-sm text-slate-900 dark:text-white block">SupportIQ Agent</span>
+                <span className="font-extrabold text-sm text-slate-900 dark:text-white block">AuraChat Agent</span>
                 <span className="text-[10px] font-medium text-emerald-500 flex items-center gap-1">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" /> Online & Ingested
                 </span>
@@ -326,7 +326,7 @@ export default function ChatPage() {
                   <Bot className="h-10 w-10" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white">Ask SupportIQ AI</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-white">Ask AuraChat AI</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1.5 leading-relaxed">
                     Hello! Ask me any questions. You can upload files in Settings to supply custom product details and reference RAG context.
                   </p>

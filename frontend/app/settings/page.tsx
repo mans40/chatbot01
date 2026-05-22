@@ -234,7 +234,7 @@ export default function SettingsPage() {
                 <span>OpenAI Authentication</span>
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
-                To generate answers using GPT-4o-mini, SupportIQ AI loads the <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">OPENAI_API_KEY</code> variable from the environment.
+                To generate answers using GPT-4o-mini, AuraChat AI loads the <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono">OPENAI_API_KEY</code> variable from the environment.
               </p>
               
               <div className="p-3.5 bg-slate-50 dark:bg-slate-900/35 border border-slate-200/50 dark:border-slate-800/60 rounded-xl space-y-2 text-[10px] leading-relaxed">

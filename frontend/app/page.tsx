@@ -72,7 +72,7 @@ export default function DashboardPage() {
               System Overview
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
-              Welcome back. Manage your SupportIQ conversational flow, index knowledge vectors, and review ratings.
+              Welcome back. Manage your AuraChat conversational flow, index knowledge vectors, and review ratings.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
@@ -190,7 +190,7 @@ export default function DashboardPage() {
         {/* Section: How RAG Works */}
         <div className="glass-panel p-6 md:p-8 rounded-3xl">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-6">
-            SupportIQ Architecture & Retrieval-Augmented Generation Flow
+            AuraChat Architecture & Retrieval-Augmented Generation Flow
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
             

@@ -15,7 +15,7 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger("supportiq")
+logger = logging.getLogger("aurachat")
 
 # Initialize database schemas dynamically
 try:
@@ -27,7 +27,7 @@ except Exception as e:
 
 # Create FastAPI app
 app = FastAPI(
-    title="SupportIQ AI Backend",
+    title="AuraChat AI Backend",
     description="Production-grade AI-powered customer support API assistant.",
     version="1.0.0"
 )
@@ -37,7 +37,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
-    "https://supportiq-frontend.vercel.app",  # Production placeholder
+    "https://aurachat-frontend.vercel.app",  # Production placeholder
 ]
 
 app.add_middleware(

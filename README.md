@@ -1,6 +1,6 @@
-# SupportIQ AI — AI-Powered Customer Support Assistant MVP
+# AuraChat AI — AI-Powered Customer Support Assistant MVP
 
-SupportIQ AI is a production-grade, real-time AI customer support chatbot MVP. It leverages Retrieval-Augmented Generation (RAG) to search uploaded documents, maintains conversation history using Redis, compiles performance metrics for an admin analytics dashboard, and supports streaming responses.
+AuraChat AI is a production-grade, real-time AI customer support chatbot MVP. It leverages Retrieval-Augmented Generation (RAG) to search uploaded documents, maintains conversation history using Redis, compiles performance metrics for an admin analytics dashboard, and supports streaming responses.
 
 ---
 
@@ -47,7 +47,7 @@ OPENAI_API_KEY=sk-proj-...
 
 # Database configurations
 # Fallback to local SQLite file for immediate out-of-the-box local running
-DATABASE_URL=sqlite:///./supportiq.db
+DATABASE_URL=sqlite:///./aurachat.db
 
 # Redis endpoint
 # Keep blank to use in-memory dictionary session cache fallback
@@ -67,7 +67,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## 🚀 Local Development (Fast Start)
 
-You can run SupportIQ AI locally on your host machine immediately with zero external dependencies (thanks to automatic SQLite, local ChromaDB, and in-memory Redis fallbacks).
+You can run AuraChat AI locally on your host machine immediately with zero external dependencies (thanks to automatic SQLite, local ChromaDB, and in-memory Redis fallbacks).
 
 ### 1. Prerequisites
 - **Node.js**: v18+ (tested on v26)
@@ -131,7 +131,7 @@ If you have Docker Desktop installed, you can orchestrate the complete environme
 ## 📁 Project Directory Structures
 
 ```text
-supportiq-ai/
+AuraChat/
 ├── backend/                  # FastAPI Application
 │   ├── app/
 │   │   ├── api/              # Routers (/chat, /analytics, /upload, etc.)

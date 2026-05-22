@@ -61,7 +61,7 @@ export default function Sidebar() {
       <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white sticky top-0 z-30">
         <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
           <Bot className="h-6 w-6 text-indigo-500" />
-          <span>SupportIQ <span className="text-xs text-indigo-500 px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 font-semibold border border-indigo-200/50">AI</span></span>
+          <span>AuraChat <span className="text-xs text-indigo-500 px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 font-semibold border border-indigo-200/50">AI</span></span>
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -84,7 +84,7 @@ export default function Sidebar() {
               <Bot className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white leading-none">SupportIQ</span>
+              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white leading-none">AuraChat</span>
               <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1">AI Support Suite</span>
             </div>
           </div>

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     
     # Database
-    DATABASE_URL: str = "sqlite:///./supportiq.db"
+    DATABASE_URL: str = "sqlite:///./aurachat.db"
     
     # Redis Session Memory
     REDIS_URL: str = ""

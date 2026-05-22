@@ -16,7 +16,7 @@ class OpenAIService:
             logger.info("OpenAI client initialized successfully.")
         else:
             self.client = None
-            logger.warning("OPENAI_API_KEY not set. SupportIQ will run in simulated mode.")
+            logger.warning("OPENAI_API_KEY not set. AuraChat will run in simulated mode.")
 
     async def detect_intent(self, message: str) -> str:
         """Classify the user's query intent into support categories."""
@@ -71,7 +71,7 @@ class OpenAIService:
         
         # Construct system prompt
         system_prompt = (
-            "You are SupportIQ, an advanced AI Customer Support Assistant.\n"
+            "You are AuraChat, an advanced AI Customer Support Assistant.\n"
             "Your goal is to provide accurate, professional, and friendly assistance to customers.\n"
             "Use the provided context sections to answer the user's question. If you do not know the answer "
             "based on the context, politely state that you don't have that specific document context, but provide "
@@ -119,11 +119,11 @@ class OpenAIService:
                 # Fall through to simulated response on error
         
         # --- Simulated Response Mode (Fallbacks) ---
-        yield "*(Simulated SupportIQ Agent)*\n\n"
+        yield "*(Simulated AuraChat Agent)*\n\n"
         await asyncio.sleep(0.2)
         
         if intent == "Greeting":
-            reply = "Hello! Welcome to SupportIQ Customer Support. How can I help you today?"
+            reply = "Hello! Welcome to AuraChat Customer Support. How can I help you today?"
         elif context_str:
             reply = f"I found some information in your uploaded documentation (**{', '.join(sources)}**):\n\n"
             # Summarize the first context block briefly for simulation

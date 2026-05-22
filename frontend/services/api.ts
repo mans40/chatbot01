@@ -161,6 +161,6 @@ export const api = {
 
 const logger = {
   error: (msg: string, err: any) => {
-    console.error(`[SupportIQ Client API] ${msg}`, err);
+    console.error(`[AuraChat Client API] ${msg}`, err);
   },
 };

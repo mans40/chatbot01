@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
                 {isLoading ? '...' : analytics?.total_chats ?? 142}
               </div>
               <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                Total queries answered by SupportIQ agent since startup.
+                Total queries answered by AuraChat agent since startup.
               </p>
             </div>
 
