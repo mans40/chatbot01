@@ -1,0 +1,44 @@
+[
+  {
+    "id": "faq_password_reset",
+    "category": "account",
+    "question": "How do I reset my password?",
+    "answer": "To reset your password, click on the 'Forgot Password' link on the login page. Enter your registered email address, and we will send you a password reset link. Follow the instructions in the email to set up a new password."
+  },
+  {
+    "id": "faq_refunds",
+    "category": "billing",
+    "question": "How can I get my money back or request a refund?",
+    "answer": "Refunds are processed within 5 business days of approval. To request a refund, please contact our support team through the support portal with your order details. We offer a 14-day money-back guarantee for all subscription plans."
+  },
+  {
+    "id": "faq_account_creation",
+    "category": "account",
+    "question": "How do I create a new account?",
+    "answer": "You can create a new account by clicking the 'Sign Up' or 'Register' button on the top right corner of the homepage. Enter your name, email address, and create a password, then follow the confirmation prompt in your email to activate your account."
+  },
+  {
+    "id": "faq_support_contact",
+    "category": "support",
+    "question": "How do I contact customer support?",
+    "answer": "You can contact our customer support team via email at support@aurachat.com, through our live chat widget on the website, or by submitting a ticket on our Help Center page. We are available 24/7 to assist you."
+  },
+  {
+    "id": "faq_subscription_cancellation",
+    "category": "billing",
+    "question": "How do I cancel my active subscription?",
+    "answer": "To cancel your active subscription, go to your Account Settings, click on the 'Billing & Subscriptions' tab, and select 'Cancel Subscription'. Your premium features will remain active until the end of your current billing period."
+  },
+  {
+    "id": "faq_pricing_plans",
+    "category": "billing",
+    "question": "What pricing plans do you offer?",
+    "answer": "We offer three pricing tiers: a Free Plan with basic chatbot capabilities, a Pro Plan at $19/month for unlimited custom models, and an Enterprise Plan with dedicated support and custom integrations. You can view all details on our pricing page."
+  },
+  {
+    "id": "faq_security",
+    "category": "security",
+    "question": "Is my chat data and personal information secure?",
+    "answer": "Yes, absolutely. We use industry-standard AES-256 encryption for data at rest and SSL/TLS protocols for data in transit. We never sell your personal information or chat logs to third parties."
+  }
+]

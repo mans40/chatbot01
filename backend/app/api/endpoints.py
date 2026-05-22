@@ -14,12 +14,15 @@ from app.schemas import schemas
 from app.services.openai_service import openai_service
 from app.rag.rag_service import rag_service
 
+from app.services.vector_service import vector_service
+import asyncio
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/chat")
 async def chat_endpoint(request: schemas.ChatRequest):
-    """Asynchronous streaming chat endpoint using OpenAI and RAG context."""
+    """Asynchronous local semantic search FAQ chat endpoint using vector_service."""
     session_id = request.session_id
     message = request.message
     user_id = request.user_id
@@ -30,12 +33,29 @@ async def chat_endpoint(request: schemas.ChatRequest):
     async def event_generator():
         full_response = ""
         try:
-            # Stream tokens from OpenAI / RAG Service
-            async for chunk in openai_service.generate_response_stream(session_id, message, user_id):
+            # 1. Semantic search over ChromaDB FAQ collection using VectorService
+            match = vector_service.search_faqs(message, distance_threshold=0.7)
+            if match:
+                response_text = match["answer"]
+            else:
+                # 2. Check general RAG documents as fallback
+                rag_results = rag_service.search_similar(message, n_results=1)
+                if rag_results and rag_results[0]["distance"] < 1.0:
+                    filename = rag_results[0]["metadata"].get("filename", "uploaded documentation")
+                    response_text = f"I couldn't find a direct FAQ, but I found this related info in your document ({filename}):\n\n{rag_results[0]['content']}"
+                else:
+                    # 3. Default fallback
+                    response_text = "I'm sorry, I couldn't find a specific FAQ answer for that query. You can try asking about 'password reset', 'refunds', 'account creation', 'support contact', or 'subscription cancellation', or email us directly at support@aurachat.com."
+
+            # Stream response chunk-by-chunk to simulate real-time AI typing output
+            chunk_size = 8
+            for i in range(0, len(response_text), chunk_size):
+                chunk = response_text[i:i+chunk_size]
                 full_response += chunk
                 yield chunk
-            
-            # Save the full chat interaction to the relational DB for historical records
+                await asyncio.sleep(0.01)
+
+            # Save the full chat interaction to the SQLite DB for historical records
             db = SessionLocal()
             try:
                 db_chat = models.Chat(
@@ -47,7 +67,7 @@ async def chat_endpoint(request: schemas.ChatRequest):
                 db.add(db_chat)
                 db.commit()
                 db.refresh(db_chat)
-                # We yield a final delimiter that includes the database record ID for feedback links
+                # Yield the chat ID marker so the frontend can tie feedback/ratings to this entry
                 yield f"\n\n[CHAT_ID:{db_chat.id}]"
             except Exception as db_err:
                 logger.error(f"Failed to save chat to database: {db_err}")
@@ -55,7 +75,7 @@ async def chat_endpoint(request: schemas.ChatRequest):
                 db.close()
 
         except Exception as e:
-            logger.error(f"Error in chat streaming generator: {e}")
+            logger.error(f"Error in chat semantic generator: {e}")
             yield f"\n\n[ERROR: Failed to generate response: {str(e)}]"
 
     return StreamingResponse(event_generator(), media_type="text/plain")
