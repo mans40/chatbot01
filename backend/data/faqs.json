@@ -40,5 +40,11 @@
     "category": "security",
     "question": "Is my chat data and personal information secure?",
     "answer": "Yes, absolutely. We use industry-standard AES-256 encryption for data at rest and SSL/TLS protocols for data in transit. We never sell your personal information or chat logs to third parties."
+  },
+  {
+    "id": "faq_account_settings",
+    "category": "account",
+    "question": "How do I change my account settings or personal details?",
+    "answer": "To update your account settings or personal details, log in and navigate to the 'Account Settings' page by clicking on your profile avatar in the upper right. From there, you can change your display name, update your contact email, and manage security settings."
   }
 ]

@@ -1,0 +1,21 @@
+# AuraChat Platform - Comprehensive Overview
+
+## What is AuraChat?
+AuraChat is an advanced, privacy-first Document AI Customer Support Suite. It empowers businesses to instantly build powerful support assistants that ingest proprietary PDFs and Text files locally to generate context-accurate, secure replies using Retrieval-Augmented Generation (RAG).
+
+## Core Architecture & Technologies
+AuraChat is built as a split-stack application:
+- **Frontend**: Next.js (React) with Tailwind CSS and Framer Motion. Engineered for extreme speed, liquid glass UI aesthetics, and mobile-first responsiveness.
+- **Backend**: FastAPI (Python) server. Extremely fast and asynchronous, utilizing SQLite for chat history and conversational memory.
+- **RAG Engine**: ChromaDB (Local Vector Store) running entirely offline. Documents are converted into embeddings using the local `all-MiniLM-L6-v2` neural network model.
+
+## How We Built It
+1. **Local Vector Pipeline**: When a user uploads a manual, the backend PyPDF2 and custom text splitters recursively chunk the text into 300-500 character segments. These chunks are embedded natively and mapped into ChromaDB using fast L2 Cosine similarity distances.
+2. **Context-Aware Retrieval**: When a query hits the FastAPI `/chat` endpoint, AuraChat computes the similarity of the query, retrieves the top 3 most relevant overlapping segments, extracts the best matching sentence, and returns a natural conversational answer.
+3. **Conversational Memory**: Chat sessions are grouped by `session_id`, logging all interactions in a local SQLite database to provide context persistence across turns.
+4. **Interactive UI/UX**: The frontend consumes this data using React Query and local state to emulate a seamless, zero-latency AI chat interface, rich with micro-animations and granular analytics panels.
+
+## Key Deployment Features
+- Completely offline sandbox, no mandatory third-party network API calls.
+- Fast, parallelized backend with asynchronous streaming.
+- Fully responsive design engineered to scale across any device (PC & Mobile).

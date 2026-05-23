@@ -55,9 +55,10 @@ app.include_router(api_router, prefix="/api")
 @app.get("/health")
 def health_check():
     """Simple API status health check route."""
+    import datetime
     return {
         "status": "healthy",
-        "timestamp": health_check.__doc__, # or just standard string
+        "timestamp": datetime.datetime.utcnow().isoformat(),
         "environment": settings.ENVIRONMENT
     }
 

@@ -49,19 +49,17 @@ class RAGService:
             self.client = None
             self.collection = None
 
-    def chunk_text(self, text: str, chunk_size: int = 500, chunk_overlap: int = 50) -> List[str]:
-        """Simple, robust text splitter with overlap."""
+    def chunk_text(self, text: str, chunk_size: int = 400, chunk_overlap: int = 80) -> List[str]:
+        """Simple, robust text splitter with character overlap (300-500 chars)."""
         if not text:
             return []
         
-        words = text.split()
         chunks = []
-        
-        # Simple word-count based chunking
         i = 0
-        while i < len(words):
-            chunk = words[i:i + chunk_size]
-            chunks.append(" ".join(chunk))
+        while i < len(text):
+            chunk = text[i:i + chunk_size]
+            if chunk.strip():
+                chunks.append(chunk.strip())
             i += (chunk_size - chunk_overlap)
             
         return chunks

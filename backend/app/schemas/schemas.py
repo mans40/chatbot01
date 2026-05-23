@@ -69,3 +69,7 @@ class AnalyticsSummary(BaseModel):
     active_users: int
     chats_over_time: List[dict]
     recent_feedback: List[dict]
+    uploaded_documents: int
+    successful_responses: int
+    failed_queries: int
+

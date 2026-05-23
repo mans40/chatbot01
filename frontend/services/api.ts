@@ -38,7 +38,11 @@ export interface AnalyticsData {
     chat_message: string;
     created_at: string;
   }>;
+  uploaded_documents: number;
+  successful_responses: number;
+  failed_queries: number;
 }
+
 
 // Axios Instance
 const apiClient = axios.create({
@@ -63,6 +67,13 @@ export const api = {
   async getHistory(sessionId: string): Promise<ChatMessage[]> {
     const res = await apiClient.get<ChatMessage[]>(`/api/history?session_id=${sessionId}`);
     return res.data;
+  },
+
+  /**
+   * Delete a chat session.
+   */
+  async deleteSession(sessionId: string): Promise<void> {
+    await apiClient.delete(`/api/sessions/${sessionId}`);
   },
 
   /**
@@ -92,6 +103,14 @@ export const api = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return res.data;
+  },
+
+  /**
+   * Fetch list of all ingested PDF manuals.
+   */
+  async getDocuments(): Promise<Array<{ document_id: string; filename: string; file_path: string; chunk_count: number; ingested_at: string }>> {
+    const res = await apiClient.get('/api/documents');
     return res.data;
   },
 

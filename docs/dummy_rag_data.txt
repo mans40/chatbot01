@@ -1,0 +1,22 @@
+# AuraChat Employee Handbook
+
+## 1. Introduction
+Welcome to AuraChat! We are excited to have you on board. This handbook contains the policies and guidelines for all employees.
+
+## 2. Work Hours
+The standard work hours are from 9:00 AM to 5:00 PM, Monday through Friday. We offer flexible working hours, but all employees must be online during the core hours of 10:00 AM to 3:00 PM.
+
+## 3. Leave Policy
+All full-time employees are entitled to 20 days of paid time off (PTO) per year. In addition, employees get 10 paid sick days and 12 public holidays.
+
+## 4. Remote Work
+Employees are allowed to work remotely up to 3 days a week. For fully remote employees, core working hours are based on the Eastern Standard Time (EST) timezone.
+
+## 5. Equipment
+Upon joining, each employee is provided with a Macbook Pro M3, a monitor, and a $500 stipend for setting up their home office.
+
+## 6. IT Support
+For any IT related issues, please contact the IT helpdesk at it-support@aurachat.example.com or call 555-0199.
+
+## 7. Reimbursements
+Travel and meal expenses incurred during business trips can be expensed through the Expensify portal. Please submit receipts within 30 days of the expense.

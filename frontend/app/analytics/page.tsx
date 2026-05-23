@@ -1,31 +1,35 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { 
   BarChart3, 
   TrendingUp, 
   Star, 
-  MessageSquare, 
   ShieldAlert, 
-  MessageCircle,
   Clock,
-  ChevronRight,
-  Filter
+  Filter,
+  CheckCircle,
+  FileText,
+  Loader2,
+  Users
 } from 'lucide-react';
 import { 
-  BarChart, 
-  Bar, 
+  CartesianGrid,
   XAxis, 
   YAxis, 
   Tooltip, 
   ResponsiveContainer,
-  CartesianGrid
+  AreaChart,
+  Area
 } from 'recharts';
 import Sidebar from '../../components/Sidebar';
 import { api } from '../../services/api';
 
 export default function AnalyticsPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [ratingFilter, setRatingFilter] = useState<number | 'all'>('all');
 
@@ -34,17 +38,27 @@ export default function AnalyticsPage() {
     setMounted(true);
   }, []);
 
+  // Authenticate validation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('user_authenticated');
+      if (auth !== 'true') {
+        router.push('/login');
+      }
+    }
+  }, [router]);
+
   const { data: analytics, isLoading, isError } = useQuery({
     queryKey: ['analyticsData'],
     queryFn: api.getAnalytics,
-    refetchInterval: 10000, // Refetch every 10s
+    refetchInterval: 12000, // Refetch every 12s
   });
 
   if (!mounted) {
     return (
-      <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="flex h-screen bg-white text-slate-800">
         <Sidebar />
-        <main className="flex-1 p-6 md:p-8 animate-pulse" />
+        <main className="flex-1 p-6 md:p-8 animate-pulse bg-white" />
       </div>
     );
   }
@@ -64,214 +78,318 @@ export default function AnalyticsPage() {
     ? analytics.chats_over_time 
     : defaultChartData;
 
-  // Filter feedback
-  const feedbacks = analytics?.recent_feedback ?? [
-    { id: 1, rating: 5, comment: 'Amazing! Answered my question about setup instantly.', chat_message: 'How do I run this app locally?', created_at: '2026-05-22 14:10' },
-    { id: 2, rating: 4, comment: 'Gave a helpful summary of billing.', chat_message: 'What are the pricing tiers?', created_at: '2026-05-22 13:45' },
-    { id: 3, rating: 2, comment: 'Did not understand what I meant by API integration.', chat_message: 'Can you show me your API routers code?', created_at: '2026-05-22 11:22' },
-  ];
-
-  const filteredFeedbacks = feedbacks.filter(f => {
+  const filteredFeedback = analytics?.recent_feedback?.filter(item => {
     if (ratingFilter === 'all') return true;
-    return f.rating === ratingFilter;
-  });
+    return item.rating === ratingFilter;
+  }) || [];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-white text-slate-800">
+      
       {/* Sidebar Navigation */}
       <Sidebar />
 
-      {/* Main content pane */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10">
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto p-6 md:p-8 lg:p-10 no-scrollbar bg-slate-50/20">
         
-        {/* Title Header */}
-        <div className="pb-6 mb-8 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Page Header */}
+        <div className="pb-6 mb-8 border-b border-sky-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-              <BarChart3 className="h-7 w-7 text-indigo-500" />
+            <h1 className="text-xl md:text-2xl font-display font-black tracking-tight text-slate-900 flex items-center gap-3">
+              <BarChart3 className="h-6 w-6 text-sky-500" />
               <span>Performance Analytics</span>
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">
-              Track support ratings, review user queries, and analyze chatbot traffic metrics.
+            <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed font-medium">
+              Verify platform conversation counts, RAG retrieval statistics, and star feedback reviews.
             </p>
           </div>
-          <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/40 dark:border-slate-700/50">
-            <Clock className="h-3.5 w-3.5" />
-            <span>Updated real-time</span>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-100 text-sky-600 text-[10px] font-bold shadow-sm">
+            <Clock className="h-3.5 w-3.5 animate-spin-slow text-sky-500" />
+            <span>REAL-TIME PIPELINE</span>
           </div>
         </div>
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          
-          {/* Detailed metrics card */}
-          <div className="lg:col-span-1 space-y-5">
-            
-            {/* Satisfaction Rate Card */}
-            <div className="glass-panel p-5 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Customer Satisfaction</span>
-              <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                  {isLoading ? '...' : `${analytics?.satisfaction_rate ?? 94.2}%`}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                  <TrendingUp className="h-3 w-3" /> +2.1%
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} className={`h-4 w-4 ${star <= (analytics?.avg_rating ?? 4.5) ? 'text-amber-500 fill-amber-500' : 'text-slate-200 dark:text-slate-800'}`} />
-                ))}
-                <span className="text-xs text-slate-400 font-semibold ml-1">
-                  ({analytics?.avg_rating ?? 4.5} / 5 avg)
-                </span>
-              </div>
-            </div>
-
-            {/* Chat volume metric Card */}
-            <div className="glass-panel p-5 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Chat Interactions</span>
-              <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-2">
-                {isLoading ? '...' : analytics?.total_chats ?? 142}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
-                Total queries answered by AuraChat agent since startup.
-              </p>
-            </div>
-
-            {/* Ingestion stats */}
-            <div className="glass-panel p-5 rounded-2xl">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Review Flags</span>
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs font-semibold text-slate-500">Unresolved Queries:</span>
-                <span className="text-xs font-bold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldAlert className="h-3.5 w-3.5" />
-                  {isLoading ? '...' : analytics?.unresolved_queries ?? 3}
-                </span>
-              </div>
-              <div className="flex items-center justify-between mt-2.5">
-                <span className="text-xs font-semibold text-slate-500">Feedback Responses:</span>
-                <span className="text-xs font-bold text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded-full">
-                  {isLoading ? '...' : analytics?.feedback_count ?? 32}
-                </span>
-              </div>
-            </div>
-
+        {/* Loading / Error states */}
+        {isLoading ? (
+          <div className="h-[400px] flex flex-col items-center justify-center text-center">
+            <Loader2 className="h-8 w-8 text-sky-500 animate-spin mb-3" />
+            <p className="text-xs text-slate-500 font-bold">Aggregating platform metrics...</p>
           </div>
-
-          {/* Chart Card */}
-          <div className="lg:col-span-2 glass-panel p-6 rounded-3xl flex flex-col justify-between">
+        ) : isError ? (
+          <div className="h-[250px] liquid-glass rounded-3xl p-8 border border-sky-100 flex flex-col items-center justify-center text-center space-y-4 shadow-md">
+            <ShieldAlert className="h-10 w-10 text-rose-500 animate-bounce" />
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 flex items-center gap-2">
-                <MessageSquare className="h-4.5 w-4.5 text-indigo-500" />
-                <span>Chat Activity Volume</span>
-              </h2>
-              <p className="text-[11px] text-slate-400 mb-6">
-                Aggregate count of user queries handled per day.
-              </p>
-            </div>
-            
-            {/* Chart Container */}
-            <div className="h-56 w-full text-xs">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(226,232,240,0.06)" />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(15,23,42,0.95)', 
-                      borderColor: 'rgba(255,255,255,0.1)',
-                      color: '#ffffff',
-                      borderRadius: '12px',
-                      fontSize: '11px'
-                    }} 
-                  />
-                  <Bar dataKey="count" fill="url(#colorBar)" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                  <defs>
-                    <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.85}/>
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.1}/>
-                    </linearGradient>
-                  </defs>
-                </BarChart>
-              </ResponsiveContainer>
+              <h3 className="font-display font-black text-slate-900 text-sm">Failed to Load Metrics</h3>
+              <p className="text-[11px] text-slate-550 mt-1 font-medium">Make sure the FastAPI backend server is active on localhost:8000.</p>
             </div>
           </div>
-
-        </div>
-
-        {/* Customer Feedbacks Logs Section */}
-        <div className="glass-panel p-6 md:p-8 rounded-3xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Customer Feedback Logs</h2>
-              <p className="text-[11px] text-slate-400 mt-0.5">Filter ratings and read review descriptions.</p>
-            </div>
-
-            {/* Filter controls */}
-            <div className="flex items-center gap-2 text-xs">
-              <Filter className="h-3.5 w-3.5 text-slate-400" />
-              <select
-                value={ratingFilter}
-                onChange={(e) => setRatingFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
-                className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded-lg text-xs focus:outline-none"
+        ) : (
+          <div className="space-y-8">
+            
+            {/* Aggregate Metrics Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              
+              {/* Card 1: Total Chats */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="liquid-glass p-5 rounded-2xl border border-sky-100 card-hover-effect relative overflow-hidden group"
               >
-                <option value="all">All Stars</option>
-                <option value="5">5 Stars</option>
-                <option value="4">4 Stars</option>
-                <option value="3">3 Stars</option>
-                <option value="2">2 Stars</option>
-                <option value="1">1 Star</option>
-              </select>
-            </div>
-          </div>
+                <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-colors" />
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">Total Conversations</span>
+                <span className="text-2xl font-display font-black text-slate-900 block mt-1.5 leading-none">
+                  {analytics?.total_chats ?? 0}
+                </span>
+                <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 font-extrabold mt-3">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>Interactive exchanges</span>
+                </div>
+              </motion.div>
 
-          {/* Feedback table/list */}
-          <div className="overflow-x-auto">
-            {filteredFeedbacks.length === 0 ? (
-              <div className="py-12 text-center text-xs text-slate-400 dark:text-slate-500">
-                No feedback reviews matching selection.
+              {/* Card 2: Satisfaction rate */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="liquid-glass p-5 rounded-2xl border border-sky-100 card-hover-effect relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-colors" />
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">Satisfaction Index</span>
+                <span className="text-2xl font-display font-black text-slate-900 block mt-1.5 leading-none">
+                  {analytics?.satisfaction_rate ?? 100}%
+                </span>
+                <div className="flex items-center gap-1 mt-3">
+                  <div className="flex text-amber-400">
+                    <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  </div>
+                  <span className="text-[9px] text-slate-500 font-bold ml-1">
+                    Avg: {analytics?.avg_rating ?? 0.0}/5 ({analytics?.feedback_count ?? 0} votes)
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* Card 3: RAG PDF Manuals */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="liquid-glass p-5 rounded-2xl border border-sky-100 card-hover-effect relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-colors" />
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">Ingested Knowledge</span>
+                <span className="text-2xl font-display font-black text-slate-900 block mt-1.5 leading-none">
+                  {analytics?.uploaded_documents ?? 0}
+                </span>
+                <div className="flex items-center gap-1.5 text-[9px] text-sky-600 font-extrabold mt-3">
+                  <FileText className="h-3 w-3" />
+                  <span>PDF support manuals active</span>
+                </div>
+              </motion.div>
+
+              {/* Card 4: Response Quality Success Ratio */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="liquid-glass p-5 rounded-2xl border border-sky-100 card-hover-effect relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-full blur-2xl group-hover:bg-sky-500/10 transition-colors" />
+                <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">Response Quality</span>
+                <span className="text-2xl font-display font-black text-slate-900 block mt-1.5 leading-none">
+                  {analytics?.total_chats ? Math.round(((analytics.successful_responses) / analytics.total_chats) * 100) : 100}%
+                </span>
+                <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 font-extrabold mt-3">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>{analytics?.successful_responses ?? 0} direct RAG answers</span>
+                </div>
+              </motion.div>
+
+            </div>
+
+            {/* Performance charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Chart container */}
+              <div className="lg:col-span-2 liquid-glass p-6 rounded-3xl border border-sky-100 shadow-md">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <span className="text-[9px] font-extrabold text-sky-600 uppercase tracking-wider block">Traffic Metrics</span>
+                    <h3 className="text-xs font-bold text-slate-900 font-display uppercase tracking-wider mt-0.5">Conversations Distribution</h3>
+                  </div>
+                  <span className="text-[9px] text-sky-600 font-extrabold uppercase bg-sky-50 px-2 py-0.5 rounded border border-sky-100">
+                    LAST 7 DAYS
+                  </span>
+                </div>
+
+                <div className="h-64 w-full text-[9px] text-slate-550 font-mono">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorChatsLight" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis dataKey="date" stroke="#94a3b8" tickLine={false} />
+                      <YAxis stroke="#94a3b8" tickLine={false} allowDecimals={false} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#ffffff', 
+                          borderColor: '#e2e8f0', 
+                          borderRadius: '12px',
+                          color: '#0f172a',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+                        }} 
+                      />
+                      <Area type="monotone" dataKey="count" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#colorChatsLight)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            ) : (
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800/80">
-                    <th className="pb-3 font-semibold">User Query</th>
-                    <th className="pb-3 font-semibold">Rating</th>
-                    <th className="pb-3 font-semibold">Review Comment</th>
-                    <th className="pb-3 font-semibold">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                  {filteredFeedbacks.map((f) => (
-                    <tr key={f.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
-                      <td className="py-4 pr-4 max-w-xs truncate font-medium text-slate-900 dark:text-white">
-                        {f.chat_message}
-                      </td>
-                      <td className="py-4">
-                        <div className="flex items-center gap-0.5 text-amber-500">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`h-3 w-3 ${i < f.rating ? 'fill-amber-500' : 'text-slate-200 dark:text-slate-800'}`} 
-                            />
-                          ))}
+
+              {/* AI performance status */}
+              <div className="liquid-glass p-6 rounded-3xl border border-sky-100 shadow-md flex flex-col justify-between">
+                <div>
+                  <span className="text-[9px] font-extrabold text-sky-600 uppercase tracking-wider block">Retrieval Info</span>
+                  <h3 className="text-xs font-bold text-slate-900 font-display uppercase tracking-wider mt-0.5">RAG System Health</h3>
+                  
+                  <div className="space-y-4 mt-6">
+                    
+                    {/* Successful responses bar */}
+                    <div>
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                        <span>Direct Retrieval Hits</span>
+                        <span className="text-slate-800 font-extrabold">{analytics?.successful_responses ?? 0}</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-sky-500 rounded-full"
+                          style={{ 
+                            width: `${analytics?.total_chats ? ((analytics.successful_responses) / analytics.total_chats) * 100 : 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Unresolved / Fallback query bar */}
+                    <div>
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 mb-1">
+                        <span>Fallback / Poor Ratings</span>
+                        <span className="text-slate-800 font-extrabold">{analytics?.failed_queries ?? 0}</span>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-rose-500 rounded-full"
+                          style={{ 
+                            width: `${analytics?.total_chats ? (analytics.failed_queries / analytics.total_chats) * 100 : 0}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Active users count */}
+                    <div className="pt-4 border-t border-slate-150 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-450 font-bold">Active Chat Threads:</span>
+                      <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5 text-sky-500 animate-pulse" />
+                        {analytics?.active_users ?? 0} Threads
+                      </span>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 border border-slate-150 rounded-xl text-[9px] leading-relaxed text-slate-500 mt-6 lg:mt-0 font-medium">
+                  <span className="font-bold text-slate-700 block mb-0.5">Automated RAG Sandbox:</span>
+                  Fallback matches represent prompts where the bot responded with fallback responses or reviews was &le; 2 stars.
+                </div>
+              </div>
+
+            </div>
+
+            {/* Ingestion & Feedback review stream */}
+            <div className="bg-slate-50 border border-sky-100 p-6 rounded-3xl shadow-sm">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <span className="text-[9px] font-extrabold text-sky-600 uppercase tracking-wider block">Customer Reviews</span>
+                  <h3 className="text-xs font-bold text-slate-900 font-display uppercase tracking-wider mt-0.5">Recent Assistant Ratings</h3>
+                </div>
+
+                {/* Rating filter controls */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-450 font-bold flex items-center gap-1 mr-1">
+                    <Filter className="h-3.5 w-3.5 text-slate-400" /> Filter:
+                  </span>
+                  <div className="flex gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+                    {['all', 5, 4, 3, 2, 1].map((val) => (
+                      <button
+                        key={val}
+                        onClick={() => setRatingFilter(val as any)}
+                        className={`px-2.5 py-1 rounded-lg text-[9px] font-bold cursor-pointer transition-colors ${
+                          ratingFilter === val
+                            ? 'bg-sky-500 text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {val === 'all' ? 'All' : `${val}★`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Feed table list */}
+              {filteredFeedback.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400 italic bg-white border border-slate-200 rounded-xl font-medium">
+                  No star rating matching filter found.
+                </div>
+              ) : (
+                <div className="space-y-3.5">
+                  {filteredFeedback.map((feed) => (
+                    <div 
+                      key={feed.id}
+                      className="p-3.5 bg-white border border-slate-250 rounded-xl flex flex-col sm:flex-row justify-between gap-3 text-xs leading-normal font-medium"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="flex text-amber-400">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star 
+                                key={i} 
+                                className={`h-3 w-3 ${i < feed.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[9px] font-mono text-slate-450">{feed.created_at}</span>
                         </div>
-                      </td>
-                      <td className="py-4 pr-4 max-w-sm text-slate-500 dark:text-slate-400 italic">
-                        {f.comment || '—'}
-                      </td>
-                      <td className="py-4 text-slate-400 text-[10px]">
-                        {f.created_at}
-                      </td>
-                    </tr>
+                        <p className="text-[11px] text-slate-700">
+                          &quot;{feed.chat_message}&quot;
+                        </p>
+                        {feed.comment && (
+                          <div className="p-2.5 bg-slate-50 rounded-lg text-[10px] text-slate-600 font-bold border border-slate-200 mt-2 shadow-sm">
+                            Feedback Comment: &quot;{feed.comment}&quot;
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="shrink-0 mt-1 sm:mt-0">
+                        <span className="text-[9px] text-sky-600 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+                          CHAT ID: {feed.id}
+                        </span>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            )}
+                </div>
+              )}
+            </div>
+
           </div>
-        </div>
+        )}
 
       </main>
     </div>

@@ -1,194 +1,111 @@
-# AuraChat AI — AI-Powered Customer Support Assistant MVP
+<div align="center">
+  <h1>🤖 AuraChat Platform</h1>
+  <p><strong>Secure, Local Document AI Customer Support Suite</strong></p>
+  <p>
+    <a href="#about">About</a> •
+    <a href="#features">Features</a> •
+    <a href="#how-it-works">How It Works</a> •
+    <a href="#tech-stack">Tech Stack</a> •
+    <a href="#getting-started">Getting Started</a>
+  </p>
+</div>
 
-AuraChat AI is a production-grade, real-time AI customer support chatbot MVP. It leverages Retrieval-Augmented Generation (RAG) to search uploaded documents, maintains conversation history using Redis, compiles performance metrics for an admin analytics dashboard, and supports streaming responses.
+<br/>
+
+## 🌟 About AuraChat
+
+AuraChat is a completely local, privacy-first Document AI Support Suite. Have you ever wanted a customer support chatbot that actually knows the ins-and-outs of your specific product manuals, guidelines, and documentation without uploading your private company data to a third-party cloud? That's what AuraChat does. 
+
+It empowers you to ingest your own proprietary PDFs and Text files and instantly spins up a secure AI assistant capable of answering questions naturally and accurately based *only* on the documents provided. Everything—from the database to the neural network vector embeddings—runs locally on your machine.
 
 ---
 
-## 🏗️ Architecture Overview
+## ✨ Features
 
-The application is structured into three main layers:
+- **100% Local RAG Pipeline**: No data leaves your machine. Your documents are chunked and embedded using an offline, state-of-the-art neural network (`all-MiniLM-L6-v2`).
+- **Zero-Latency Feel**: Engineered with Next.js, Framer Motion, and FastAPI asynchronous streaming for instantaneous character-by-character responses.
+- **Smart Conversational Memory**: Chat sessions remember context. Jump back into an old thread and pick up right where you left off.
+- **Fluid & Responsive Design**: Our "Liquid Glass" UI looks stunning on both 4K desktop monitors and tiny smartphone screens. 
+- **Granular Analytics**: Track total conversations, monitor satisfaction rates from your users, and diagnose failed RAG hits.
+- **Multiple Formats Supported**: Drag and drop `.pdf` or `.txt` manuals directly into the browser to expand the bot's knowledge in seconds.
 
-1. **Frontend (Next.js)**: A responsive React dashboard designed with TailwindCSS, Lucide Icons, and Recharts, utilizing Axios and React Query for asynchronous API states.
-2. **Backend (FastAPI)**: An asynchronous Python web service handling session memory matching, RAG operations, relational databases management, and CORS routing.
-3. **Storage & AI Infrastructure**:
-   - **PostgreSQL**: Stores persistent relational entities (Users, Chats history logs, Feedback ratings).
-   - **Redis**: Caches recent conversation transcripts for short-term memory retrieval.
-   - **ChromaDB**: In-process Vector DB storing local document embeddings.
-   - **Sentence-Transformers (`all-MiniLM-L6-v2`)**: Generates 384-dimensional text vectors locally (100% offline, saving OpenAI API costs).
-   - **OpenAI GPT-4o-mini**: Generates friendly, context-grounded final chat responses.
+---
 
-```mermaid
-graph TD
-    User([Customer]) -->|Sends query| Frontend[Next.js Client]
-    Frontend -->|POST /api/chat| Backend[FastAPI Server]
-    
-    Backend -->|Check Cache| Redis[(Redis Memory)]
-    Backend -->|Local Embeddings| STransformers[SentenceTransformers]
-    STransformers -->|Semantic Search| Chroma[(ChromaDB Vector Store)]
-    
-    Backend -->|Retrieve Context & History| LLM[OpenAI GPT-4o-mini]
-    LLM -->|Stream responses| Frontend
-    
-    Backend -->|After Stream Completes| Postgres[(PostgreSQL DB)]
+## 🛠️ How It Works
+
+AuraChat uses a technique called **Retrieval-Augmented Generation (RAG)**:
+1. **Ingestion**: You upload a document. We recursively split the text into optimized 400-character chunks with overlaps so no context is lost.
+2. **Embedding**: We turn those text chunks into multidimensional mathematical vectors and save them locally into **ChromaDB**.
+3. **Retrieval**: When a user asks a question, we convert their question into a vector and use **Cosine L2 proximity** to find the 3 most relevant chunks from your documents in milliseconds.
+4. **Response**: We seamlessly extract the best context, stitch it into a natural, conversational reply, and stream it to the UI!
+
+---
+
+## 💻 Tech Stack
+
+**Frontend (Client)**
+- **Framework**: Next.js 14+ (App Router, React Query)
+- **Styling**: Tailwind CSS & Framer Motion
+- **Icons & Charts**: Lucide React & Recharts
+
+**Backend (Server)**
+- **Framework**: FastAPI (Python 3.10+)
+- **Vector Database**: ChromaDB (Local SQLite integration)
+- **Standard Database**: SQLite (via SQLAlchemy for session logs)
+- **AI/Embeddings**: SentenceTransformers (`all-MiniLM-L6-v2`) & PyPDF2
+
+---
+
+## 🚀 Getting Started
+
+To get the AuraChat sandbox running on your local machine, follow these steps:
+
+### Prerequisites
+- Node.js (v18+)
+- Python (3.10+)
+- Git
+
+### 1. Clone & Set Up Backend
+```bash
+# Navigate to the backend
+cd backend
+
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the FastAPI server (runs on port 8000)
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
----
+### 2. Set Up Frontend
+Open a new terminal window:
+```bash
+# Navigate to the frontend
+cd frontend
 
-## ⚙️ Environment Variables (`.env`)
+# Install dependencies
+npm install
 
-Create a `.env` file in the root workspace folder with these parameters:
-
-```env
-# Mode
-ENVIRONMENT=development
-
-# OpenAI Key for response generation
-OPENAI_API_KEY=sk-proj-...
-
-# Database configurations
-# Fallback to local SQLite file for immediate out-of-the-box local running
-DATABASE_URL=sqlite:///./aurachat.db
-
-# Redis endpoint
-# Keep blank to use in-memory dictionary session cache fallback
-REDIS_URL=
-
-# Chroma Vector DB settings
-# Keep blank to run local persistent vector storage at ./chroma_db
-CHROMA_SERVER_HOST=
-CHROMA_SERVER_PORT=8000
-CHROMA_PERSIST_DIR=./chroma_db
-
-# Frontend coordinates
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Start the Next.js development server
+npm run dev
 ```
 
----
-
-## 🚀 Local Development (Fast Start)
-
-You can run AuraChat AI locally on your host machine immediately with zero external dependencies (thanks to automatic SQLite, local ChromaDB, and in-memory Redis fallbacks).
-
-### 1. Prerequisites
-- **Node.js**: v18+ (tested on v26)
-- **Python**: 3.11+
-
-### 2. Backend Setup
-1. Navigate into the backend folder:
-   ```bash
-   cd backend
-   ```
-2. Create and source a Python virtual environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-3. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Run the FastAPI development server:
-   ```bash
-   python3 -m app.main
-   ```
-   *The server starts on [http://localhost:8000](http://localhost:8000). Relational tables will initialize automatically on start.*
-
-### 3. Frontend Setup
-1. Open a new terminal and navigate to the frontend folder:
-   ```bash
-   cd frontend
-   ```
-2. Install npm packages:
-   ```bash
-   npm install
-   ```
-3. Launch the Next.js development client:
-   ```bash
-   npm run dev
-   ```
-   *Open [http://localhost:3000](http://localhost:3000) in your browser.*
+### 3. Launch
+Open `http://localhost:3000` in your browser. 
+To log into the console, use the demo credentials:
+**Email:** `admin@aurachat.com`  
+**Password:** `admin123`
 
 ---
 
-## 🐳 Running with Docker (Production Ready)
+## 🔒 Security & Sandbox Info
+This project is built explicitly for offline, sandboxed university and enterprise usage. By default, it operates in simulated LLM mode using a powerful keyword-overlap heuristic to guarantee 100% offline data privacy. If you wish to connect an external LLM like OpenAI for even smarter generative summarization, simply provide your API key in a `.env` file within the backend folder.
 
-If you have Docker Desktop installed, you can orchestrate the complete environment (including true PostgreSQL, Redis, and ChromaDB servers) in one command:
-
-1. Ensure your `.env` has your `OPENAI_API_KEY` defined.
-2. Build and launch all services:
-   ```bash
-   docker-compose up --build
-   ```
-3. The services are mapped as follows:
-   - **Frontend**: [http://localhost:3000](http://localhost:3000)
-   - **Backend**: [http://localhost:8000](http://localhost:8000)
-   - **PostgreSQL**: Port 5432
-   - **Redis**: Port 6379
-   - **ChromaDB**: Port 8001
-
----
-
-## 📁 Project Directory Structures
-
-```text
-AuraChat/
-├── backend/                  # FastAPI Application
-│   ├── app/
-│   │   ├── api/              # Routers (/chat, /analytics, /upload, etc.)
-│   │   ├── core/             # Base configurations loader
-│   │   ├── database/         # SQLAlchemy session connection
-│   │   ├── models/           # DB schema schemas definitions (User, Chat, Feedback)
-│   │   ├── schemas/          # Pydantic validation validation rules
-│   │   ├── services/         # OpenAI GPT streaming pipeline
-│   │   ├── rag/              # ChromaDB client & sentence-transformers ingestion
-│   │   ├── memory/           # Redis memory controller & cache fallbacks
-│   │   └── main.py           # FastAPI entrypoint & middleware CORS
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/                 # Next.js Application
-│   ├── app/                  # App Router Pages (Home, Chat, Analytics, Settings)
-│   ├── components/           # Responsive Sidebar navigation
-│   ├── services/             # Axios API mapping & Native Fetch Streams
-│   ├── styles/               # Glassmorphism globals styles overrides
-│   ├── Dockerfile
-│   └── package.json
-├── docker-compose.yml        # Services Orchestrator
-└── README.md                 # System Guide (This document)
-```
-
----
-
-## 🔌 API Endpoints Documentation
-
-### 1. `POST /api/chat`
-Sends a query to the AI assistant, fetching matching RAG context.
-- **Request Body**:
-  ```json
-  {
-    "session_id": "session_uuid_12345",
-    "message": "How do I install the product?"
-  }
-  ```
-- **Response**: Server-Sent streaming chunks of response text, ending with a metadata marker `[CHAT_ID:x]` representing the stored SQL record.
-
-### 2. `GET /api/history`
-Retrieves conversation history for a session.
-- **Query Params**: `session_id=session_uuid_12345`
-- **Response**: List of past exchanges.
-
-### 3. `POST /api/feedback`
-Logs user rating.
-- **Request Body**:
-  ```json
-  {
-    "chat_id": 42,
-    "rating": 5,
-    "comment": "Perfect answer!"
-  }
-  ```
-
-### 4. `GET /api/analytics`
-Fetches system KPI values and charts datasets for the admin dashboard.
-
-### 5. `POST /api/upload`
-Uploads PDF/TXT manual sources to index. Must be sent as `multipart/form-data`.
+<br/>
+<div align="center">
+  Built with ❤️ for secure, localized AI.
+</div>
