@@ -221,8 +221,19 @@ def submit_feedback(feedback: schemas.FeedbackCreate, db: Session = Depends(get_
 def delete_chat_session(session_id: str, db: Session = Depends(get_db)):
     """Delete a chat session and all its messages."""
     try:
-        db.query(models.Chat).filter(models.Chat.session_id == session_id).delete()
+        # Load and delete individually to trigger SQLAlchemy cascades (e.g. feedback cascades)
+        chats = db.query(models.Chat).filter(models.Chat.session_id == session_id).all()
+        for chat in chats:
+            db.delete(chat)
         db.commit()
+
+        # Clear active memory session
+        from app.memory.memory_service import memory_service
+        try:
+            memory_service.clear_history(session_id)
+        except Exception:
+            pass
+
         return {"status": "success", "message": "Session deleted"}
     except Exception as e:
         db.rollback()
@@ -288,6 +299,19 @@ def get_documents():
     except Exception as e:
         logger.error(f"Error fetching documents list: {e}")
         return []
+
+@router.delete("/documents/{document_id}")
+def delete_document(document_id: str):
+    """Delete a document from ChromaDB and metadata registry."""
+    try:
+        from app.services.document_service import document_service
+        success = document_service.delete_document(document_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to completely purge document vectors and local manual.")
+        return {"status": "success", "message": "Document successfully deleted"}
+    except Exception as e:
+        logger.error(f"Error deleting document {document_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/analytics", response_model=schemas.AnalyticsSummary)
 def get_analytics(db: Session = Depends(get_db)):

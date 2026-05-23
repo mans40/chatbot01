@@ -115,6 +115,13 @@ export const api = {
   },
 
   /**
+   * Delete an ingested document.
+   */
+  async deleteDocument(documentId: string): Promise<void> {
+    await apiClient.delete(`/api/documents/${documentId}`);
+  },
+
+  /**
    * Streams AI chat tokens from API and triggers incremental updates.
    */
   async chatStream(

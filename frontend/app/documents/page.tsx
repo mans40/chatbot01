@@ -13,7 +13,8 @@ import {
   Loader2,
   ShieldCheck,
   Sparkles,
-  Info
+  Info,
+  Trash2
 } from 'lucide-react';
 import Sidebar from '../../components/Sidebar';
 import { api } from '../../services/api';
@@ -32,6 +33,7 @@ export default function DocumentIngestionPage() {
   const [isDragActive, setIsDragActive] = useState(false);
   const [localUploads, setLocalUploads] = useState<UploadStatus[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Authenticate validation check
   useEffect(() => {
@@ -48,6 +50,22 @@ export default function DocumentIngestionPage() {
     queryKey: ['ragDocuments'],
     queryFn: api.getDocuments,
   });
+
+  const handleDeleteDoc = async (docId: string) => {
+    if (confirm('Are you sure you want to permanently delete this document manual and purge all its vector chunks?')) {
+      setDeletingId(docId);
+      try {
+        await api.deleteDocument(docId);
+        queryClient.invalidateQueries({ queryKey: ['ragDocuments'] });
+        queryClient.invalidateQueries({ queryKey: ['analyticsData'] });
+        refetchDocs();
+      } catch (err: any) {
+        alert(err.response?.data?.detail || 'Failed to delete the document manual.');
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -311,10 +329,26 @@ export default function DocumentIngestionPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-[9px] text-emerald-600 bg-emerald-50 border border-emerald-250 px-2 py-0.5 rounded font-bold">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[9px] text-emerald-650 bg-emerald-50 border border-emerald-250 px-2 py-0.5 rounded font-bold">
                           ACTIVE RAG
                         </span>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDoc(doc.document_id);
+                          }}
+                          disabled={deletingId === doc.document_id}
+                          className="p-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-rose-100 focus:outline-none shrink-0"
+                          title="Delete document manual"
+                        >
+                          {deletingId === doc.document_id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   ))}

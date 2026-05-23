@@ -34,16 +34,62 @@ class DocumentService:
             df.to_csv(self.meta_filepath, index=False)
 
     def get_ingested_documents(self) -> List[Dict[str, Any]]:
-        """Return list of ingested documents metadata using pandas."""
+        """Return list of ingested documents metadata using pandas, with ChromaDB fallback."""
         try:
+            documents_dict = {}
+            
+            # 1. Load from metadata.csv if it exists and has content
             if os.path.exists(self.meta_filepath):
-                df = pd.read_csv(self.meta_filepath)
-                # Fill NaNs and convert to dict list
-                df = df.fillna("")
-                return df.to_dict(orient="records")
+                try:
+                    df = pd.read_csv(self.meta_filepath)
+                    df = df.fillna("")
+                    for _, row in df.iterrows():
+                        doc_id = str(row["document_id"])
+                        documents_dict[doc_id] = {
+                            "document_id": doc_id,
+                            "filename": str(row["filename"]),
+                            "file_path": str(row["file_path"]),
+                            "chunk_count": int(row["chunk_count"]),
+                            "ingested_at": str(row["ingested_at"])
+                        }
+                except Exception as csv_err:
+                    logger.error(f"Error reading metadata.csv: {csv_err}")
+
+            # 2. Query ChromaDB to fetch any missing or previous uploads (robust fallback recovery)
+            from app.rag.rag_service import rag_service
+            if rag_service.collection:
+                try:
+                    results = rag_service.collection.get(include=["metadatas"])
+                    if results and "metadatas" in results and results["metadatas"]:
+                        counts = {}
+                        filenames = {}
+                        for meta in results["metadatas"]:
+                            if meta and ("source_id" in meta or "filename" in meta):
+                                fname = str(meta.get("filename", "unknown_manual"))
+                                s_id = str(meta.get("source_id", fname))
+                                counts[s_id] = counts.get(s_id, 0) + 1
+                                filenames[s_id] = fname
+                        
+                        # Merge into documents_dict
+                        for s_id, count in counts.items():
+                            if s_id not in documents_dict:
+                                timestamp_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                                documents_dict[s_id] = {
+                                    "document_id": s_id,
+                                    "filename": filenames[s_id],
+                                    "file_path": "",
+                                    "chunk_count": count,
+                                    "ingested_at": timestamp_str
+                                }
+                                # Save to metadata.csv so it persists
+                                self.save_metadata(s_id, filenames[s_id], "", count)
+                except Exception as chroma_err:
+                    logger.error(f"Error restoring documents list from ChromaDB: {chroma_err}")
+            
+            return list(documents_dict.values())
         except Exception as e:
-            logger.error(f"Error reading metadata.csv: {e}")
-        return []
+            logger.error(f"Error in get_ingested_documents: {e}")
+            return []
 
     def save_metadata(self, doc_id: str, filename: str, file_path: str, chunk_count: int):
         """Append metadata of newly ingested document using pandas."""
@@ -206,5 +252,50 @@ class DocumentService:
         except Exception as e:
             logger.error(f"Error ingesting PDF document: {e}")
             raise e
+
+    def delete_document(self, doc_id: str) -> bool:
+        """Delete a document from ChromaDB, local storage, and metadata.csv."""
+        try:
+            # 1. Read metadata to find file path
+            if os.path.exists(self.meta_filepath):
+                df = pd.read_csv(self.meta_filepath)
+                matched = df[df["document_id"] == doc_id]
+                
+                if not matched.empty:
+                    file_path = matched.iloc[0]["file_path"]
+                    # Delete local file if it exists (safeguard against pandas nan float64 value)
+                    if isinstance(file_path, str) and file_path.strip() and os.path.exists(file_path):
+                        try:
+                            os.remove(file_path)
+                            logger.info(f"Deleted local file: {file_path}")
+                        except Exception as file_err:
+                            logger.error(f"Failed to remove local file {file_path}: {file_err}")
+                    
+                    # Remove the row from DataFrame
+                    df = df[df["document_id"] != doc_id]
+                    df.to_csv(self.meta_filepath, index=False)
+                    logger.info(f"Removed metadata entry for document: {doc_id}")
+            
+            # 2. Delete from ChromaDB
+            if rag_service.collection:
+                # 2.1. Attempt to delete by source_id
+                try:
+                    rag_service.collection.delete(where={"source_id": doc_id})
+                    logger.info(f"Deleted chunks for document {doc_id} by source_id.")
+                except Exception as chroma_err:
+                    logger.error(f"Error deleting by source_id from ChromaDB: {chroma_err}")
+                
+                # 2.2. Fail-safe delete by filename (for legacy documents loaded without source_id metadata)
+                try:
+                    # Treat the doc_id itself as a filename if it looks like one, or use doc_id
+                    rag_service.collection.delete(where={"filename": doc_id})
+                    logger.info(f"Deleted chunks for document {doc_id} by filename.")
+                except Exception as chroma_err:
+                    logger.error(f"Error deleting by filename from ChromaDB: {chroma_err}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Failed to delete document {doc_id}: {e}")
+            return False
 
 document_service = DocumentService()
