@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PORT=8000
+ENV PORT=10000
 
 # Set the working directory in the container
 WORKDIR /app
@@ -25,8 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the current directory contents into the container at /app
 COPY . .
 
-# Expose the API port
-EXPOSE 8000
+# Expose the API port (Render overrides this dynamically, fallback to 10000)
+EXPOSE 10000
 
-# Run uvicorn on container startup
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run uvicorn on container startup, dynamically binding to the PORT environment variable
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}

@@ -1,10 +1,10 @@
 import os
 import re
+import csv
 import logging
 import datetime
 from typing import List, Dict, Any, Optional
 import PyPDF2
-import pandas as pd
 from app.rag.rag_service import rag_service
 
 logger = logging.getLogger(__name__)
@@ -27,31 +27,33 @@ class DocumentService:
         )
         os.makedirs(self.docs_dir, exist_ok=True)
         
-        # Meta CSV file to track ingested files using pandas
+        # Meta CSV file to track ingested files using standard csv
         self.meta_filepath = os.path.join(self.docs_dir, "metadata.csv")
         if not os.path.exists(self.meta_filepath):
-            df = pd.DataFrame(columns=["document_id", "filename", "file_path", "chunk_count", "ingested_at"])
-            df.to_csv(self.meta_filepath, index=False)
+            with open(self.meta_filepath, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow(["document_id", "filename", "file_path", "chunk_count", "ingested_at"])
 
     def get_ingested_documents(self) -> List[Dict[str, Any]]:
-        """Return list of ingested documents metadata using pandas, with ChromaDB fallback."""
+        """Return list of ingested documents metadata using standard csv, with ChromaDB fallback."""
         try:
             documents_dict = {}
             
             # 1. Load from metadata.csv if it exists and has content
             if os.path.exists(self.meta_filepath):
                 try:
-                    df = pd.read_csv(self.meta_filepath)
-                    df = df.fillna("")
-                    for _, row in df.iterrows():
-                        doc_id = str(row["document_id"])
-                        documents_dict[doc_id] = {
-                            "document_id": doc_id,
-                            "filename": str(row["filename"]),
-                            "file_path": str(row["file_path"]),
-                            "chunk_count": int(row["chunk_count"]),
-                            "ingested_at": str(row["ingested_at"])
-                        }
+                    with open(self.meta_filepath, "r", newline="", encoding="utf-8") as f:
+                        reader = csv.DictReader(f)
+                        for row in reader:
+                            doc_id = row.get("document_id")
+                            if doc_id:
+                                documents_dict[doc_id] = {
+                                    "document_id": doc_id,
+                                    "filename": row.get("filename", ""),
+                                    "file_path": row.get("file_path", ""),
+                                    "chunk_count": int(row.get("chunk_count", 0) or 0),
+                                    "ingested_at": row.get("ingested_at", "")
+                                }
                 except Exception as csv_err:
                     logger.error(f"Error reading metadata.csv: {csv_err}")
 
@@ -92,7 +94,7 @@ class DocumentService:
             return []
 
     def save_metadata(self, doc_id: str, filename: str, file_path: str, chunk_count: int):
-        """Append metadata of newly ingested document using pandas."""
+        """Append metadata of newly ingested document using standard csv."""
         try:
             new_row = {
                 "document_id": doc_id,
@@ -101,12 +103,12 @@ class DocumentService:
                 "chunk_count": chunk_count,
                 "ingested_at": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
             }
-            if os.path.exists(self.meta_filepath):
-                df = pd.read_csv(self.meta_filepath)
-                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-            else:
-                df = pd.DataFrame([new_row])
-            df.to_csv(self.meta_filepath, index=False)
+            file_exists = os.path.exists(self.meta_filepath)
+            with open(self.meta_filepath, "a" if file_exists else "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=["document_id", "filename", "file_path", "chunk_count", "ingested_at"])
+                if not file_exists:
+                    writer.writeheader()
+                writer.writerow(new_row)
         except Exception as e:
             logger.error(f"Error saving metadata: {e}")
 
@@ -256,25 +258,32 @@ class DocumentService:
     def delete_document(self, doc_id: str) -> bool:
         """Delete a document from ChromaDB, local storage, and metadata.csv."""
         try:
-            # 1. Read metadata to find file path
+            # 1. Read metadata to find file path and filter it out using standard csv
             if os.path.exists(self.meta_filepath):
-                df = pd.read_csv(self.meta_filepath)
-                matched = df[df["document_id"] == doc_id]
+                rows = []
+                file_path = None
+                with open(self.meta_filepath, "r", newline="", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for r in reader:
+                        if r.get("document_id") == doc_id:
+                            file_path = r.get("file_path")
+                        else:
+                            rows.append(r)
                 
-                if not matched.empty:
-                    file_path = matched.iloc[0]["file_path"]
-                    # Delete local file if it exists (safeguard against pandas nan float64 value)
-                    if isinstance(file_path, str) and file_path.strip() and os.path.exists(file_path):
-                        try:
-                            os.remove(file_path)
-                            logger.info(f"Deleted local file: {file_path}")
-                        except Exception as file_err:
-                            logger.error(f"Failed to remove local file {file_path}: {file_err}")
-                    
-                    # Remove the row from DataFrame
-                    df = df[df["document_id"] != doc_id]
-                    df.to_csv(self.meta_filepath, index=False)
-                    logger.info(f"Removed metadata entry for document: {doc_id}")
+                # Delete local file if it exists
+                if file_path and isinstance(file_path, str) and file_path.strip() and os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                        logger.info(f"Deleted local file: {file_path}")
+                    except Exception as file_err:
+                        logger.error(f"Failed to remove local file {file_path}: {file_err}")
+                
+                # Rewrite metadata.csv
+                with open(self.meta_filepath, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=["document_id", "filename", "file_path", "chunk_count", "ingested_at"])
+                    writer.writeheader()
+                    writer.writerows(rows)
+                logger.info(f"Removed metadata entry for document: {doc_id}")
             
             # 2. Delete from ChromaDB
             if rag_service.collection:

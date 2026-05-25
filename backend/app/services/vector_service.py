@@ -14,22 +14,31 @@ class VectorService:
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(VectorService, cls).__new__(cls, *args, **kwargs)
-            cls._instance._init_service()
+            cls._instance.client = None
+            cls._instance._collection = None
+            cls._instance.embedding_function = None
+            cls._instance.initialized = False
+            cls._instance.faqs_filepath = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                "data",
+                "faqs.json"
+            )
         return cls._instance
 
-    def _init_service(self):
-        self.client = None
-        self.collection = None
-        self.faqs_filepath = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            "data",
-            "faqs.json"
-        )
-        
+    @property
+    def collection(self):
+        self.ensure_initialized()
+        return self._collection
+
+    def ensure_initialized(self):
+        if self.initialized:
+            return
         try:
-            # Set up the SentenceTransformer embedding function (downloads and runs all-MiniLM-L6-v2 locally)
+            logger.info("Lazy initializing VectorService FAQ collection (SentenceTransformer in CPU mode)...")
+            # Set up the SentenceTransformer embedding function with CPU device
             self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
+                model_name="all-MiniLM-L6-v2",
+                device="cpu"
             )
 
             # Initialize local ChromaDB Persistent Client
@@ -38,22 +47,29 @@ class VectorService:
             self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
 
             # Create or load the FAQ collection
-            self.collection = self.client.get_or_create_collection(
+            self._collection = self.client.get_or_create_collection(
                 name="aurachat_faqs",
                 embedding_function=self.embedding_function
             )
             logger.info("[VectorService] ChromaDB FAQ collection loaded successfully.")
             
-            # Ingest FAQ dataset
-            self.load_and_store_faqs()
+            # Ingest FAQ dataset only if it is empty to optimize performance
+            if self._collection.count() == 0:
+                logger.info("[VectorService] FAQ collection is empty. Performing initial ingestion...")
+                self.load_and_store_faqs()
+            else:
+                logger.info(f"[VectorService] FAQ collection already populated with {self._collection.count()} items. Skipping initial ingestion.")
         except Exception as e:
             logger.error(f"[VectorService] Failed to initialize Vector Service: {e}")
             self.client = None
-            self.collection = None
+            self._collection = None
+        finally:
+            self.initialized = True
 
     def load_and_store_faqs(self):
         """Loads FAQs from faqs.json, generates embeddings, and stores them in ChromaDB."""
-        if not self.collection:
+        # Note: Use self._collection directly here to avoid recursion inside ensure_initialized
+        if not self._collection:
             logger.warning("[VectorService] ChromaDB collection not initialized. Ingestion skipped.")
             return
 
@@ -74,7 +90,6 @@ class VectorService:
             metadatas = []
 
             for i, faq in enumerate(faqs):
-                # Ensure each FAQ has a unique ID
                 faq_id = faq.get("id", f"faq_{i}")
                 question = faq.get("question")
                 answer = faq.get("answer")
@@ -93,7 +108,7 @@ class VectorService:
                 })
 
             if ids:
-                self.collection.upsert(
+                self._collection.upsert(
                     ids=ids,
                     documents=documents,
                     metadatas=metadatas

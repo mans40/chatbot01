@@ -12,7 +12,6 @@ import datetime
 from app.database.db import get_db, SessionLocal
 from app.models import models
 from app.schemas import schemas
-from app.services.openai_service import openai_service
 from app.rag.rag_service import rag_service
 from app.services.vector_service import vector_service
 import asyncio

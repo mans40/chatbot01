@@ -14,16 +14,25 @@ class RAGService:
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(RAGService, cls).__new__(cls, *args, **kwargs)
-            cls._instance._init_chroma()
+            cls._instance.client = None
+            cls._instance._collection = None
+            cls._instance.embedding_function = None
+            cls._instance.initialized = False
         return cls._instance
 
-    def _init_chroma(self):
-        self.client = None
-        self.collection = None
+    @property
+    def collection(self):
+        self.ensure_initialized()
+        return self._collection
+
+    def ensure_initialized(self):
+        if self.initialized:
+            return
         try:
-            # Setup embedding function (downloads and runs all-MiniLM-L6-v2 locally)
+            logger.info("Lazy initializing RAGService (SentenceTransformer & ChromaDB in CPU mode)...")
             self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
+                model_name="all-MiniLM-L6-v2",
+                device="cpu"
             )
 
             # Connect to ChromaDB server if host is provided, otherwise run local persistent client
@@ -39,15 +48,17 @@ class RAGService:
                 self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
 
             # Create or get the collection
-            self.collection = self.client.get_or_create_collection(
+            self._collection = self.client.get_or_create_collection(
                 name="aurachat_documents",
                 embedding_function=self.embedding_function
             )
-            logger.info("ChromaDB collection initialized successfully.")
+            logger.info("ChromaDB RAG collection initialized successfully.")
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB: {e}. RAG features will be bypassed.")
             self.client = None
-            self.collection = None
+            self._collection = None
+        finally:
+            self.initialized = True
 
     def chunk_text(self, text: str, chunk_size: int = 400, chunk_overlap: int = 80) -> List[str]:
         """Simple, robust text splitter with character overlap (300-500 chars)."""

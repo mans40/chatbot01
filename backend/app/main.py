@@ -1,3 +1,8 @@
+import os
+# Force CPU execution and prevent CUDA initialization
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,8 +42,9 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
-    "https://aurachat-frontend.vercel.app",  # Production placeholder
 ]
+if settings.FRONTEND_URL:
+    origins.append(settings.FRONTEND_URL)
 
 app.add_middleware(
     CORSMiddleware,
