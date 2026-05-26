@@ -35,11 +35,8 @@ class VectorService:
             return
         try:
             logger.info("Lazy initializing VectorService FAQ collection (SentenceTransformer in CPU mode)...")
-            # Set up the SentenceTransformer embedding function with CPU device
-            self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2",
-                device="cpu"
-            )
+            # Set up the lightweight ONNX embedding function
+            self.embedding_function = embedding_functions.ONNXMiniLM_L6_V2()
 
             # Initialize local ChromaDB Persistent Client
             os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)

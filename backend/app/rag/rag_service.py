@@ -30,10 +30,7 @@ class RAGService:
             return
         try:
             logger.info("Lazy initializing RAGService (SentenceTransformer & ChromaDB in CPU mode)...")
-            self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2",
-                device="cpu"
-            )
+            self.embedding_function = embedding_functions.ONNXMiniLM_L6_V2()
 
             # Connect to ChromaDB server if host is provided, otherwise run local persistent client
             if settings.CHROMA_SERVER_HOST:
