@@ -42,9 +42,16 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
+    "https://chatbot01-green.vercel.app",
+    "https://chatbot01-green.vercel.app/",
 ]
 if settings.FRONTEND_URL:
     origins.append(settings.FRONTEND_URL)
+    # Normalize trailing slash
+    if settings.FRONTEND_URL.endswith("/"):
+        origins.append(settings.FRONTEND_URL.rstrip("/"))
+    else:
+        origins.append(settings.FRONTEND_URL + "/")
 
 app.add_middleware(
     CORSMiddleware,

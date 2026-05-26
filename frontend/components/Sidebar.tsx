@@ -85,7 +85,7 @@ export default function Sidebar() {
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-sky-100 flex flex-col justify-between transition-all duration-300 lg:translate-x-0 lg:static lg:h-screen shadow-md shrink-0 relative ${
+        className={`fixed inset-y-0 left-0 z-40 bg-white border-r border-sky-100 flex flex-col justify-between transition-all duration-300 lg:translate-x-0 lg:static lg:h-screen shadow-md shrink-0 lg:relative ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isCollapsed && mounted ? 'w-64 lg:w-20' : 'w-64 lg:w-64'}`}
       >
