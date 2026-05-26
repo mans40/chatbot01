@@ -186,23 +186,31 @@ export const api = {
         const { value, done } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true });
         
-        // Check if the chunk contains the [CHAT_ID:x] metadata marker
-        if (chunk.includes('[CHAT_ID:')) {
-          const match = chunk.match(/\[CHAT_ID:(\d+)\]/);
-          if (match && match[1]) {
-            onChatIdDetected(parseInt(match[1], 10));
+        // Split by standard Server-Sent Events double-newline delimiter
+        const lines = buffer.split('\n\n');
+        // Save any partial line left at the end to assemble with the next read chunk
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+          
+          try {
+            const jsonStr = trimmed.substring(6); // Extract everything after 'data: '
+            const parsed = JSON.parse(jsonStr);
+            
+            if (parsed.type === 'token') {
+              onToken(parsed.content);
+            } else if (parsed.type === 'chat_id') {
+              onChatIdDetected(parsed.content);
+            } else if (parsed.type === 'error') {
+              throw new Error(parsed.content);
+            }
+          } catch (jsonErr) {
+            logger.error('Failed to parse SSE payload line:', jsonErr);
           }
-          // Strip the chat ID tag from the output display
-          const cleanChunk = chunk.replace(/\[CHAT_ID:\d+\]/, '');
-          if (cleanChunk) onToken(cleanChunk);
-        } else if (chunk.includes('[ERROR:')) {
-          const match = chunk.match(/\[ERROR:\s*(.+?)\]/);
-          const errMsg = match ? match[1] : 'Error generating response';
-          throw new Error(errMsg);
-        } else {
-          onToken(chunk);
         }
       }
     } catch (err: any) {

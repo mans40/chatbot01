@@ -15,6 +15,7 @@ from app.schemas import schemas
 from app.rag.rag_service import rag_service
 from app.services.vector_service import vector_service
 import asyncio
+import json
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -126,12 +127,12 @@ async def chat_endpoint(request: schemas.ChatRequest):
                     if prev_topics:
                         response_text += f"\n\n*Reflecting on our earlier topic regarding '{' '.join(prev_topics[:2])}', please let me know if you would like me to check anything else.*"
 
-            # Stream response chunk-by-chunk to simulate real-time AI typing
+            # Stream response chunk-by-chunk in standard SSE format
             chunk_size = 12
             for i in range(0, len(response_text), chunk_size):
                 chunk = response_text[i:i+chunk_size]
                 full_response += chunk
-                yield chunk
+                yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
                 await asyncio.sleep(0.01)
 
             # Store assistant response in memory_service
@@ -149,7 +150,7 @@ async def chat_endpoint(request: schemas.ChatRequest):
                 db.add(db_chat)
                 db.commit()
                 db.refresh(db_chat)
-                yield f"\n\n[CHAT_ID:{db_chat.id}]"
+                yield f"data: {json.dumps({'type': 'chat_id', 'content': db_chat.id})}\n\n"
             except Exception as db_err:
                 logger.error(f"Failed to save chat to database: {db_err}")
             finally:
@@ -157,9 +158,9 @@ async def chat_endpoint(request: schemas.ChatRequest):
 
         except Exception as e:
             logger.error(f"Error in smart chat generator: {e}", exc_info=True)
-            yield f"\n\n[ERROR: Failed to generate response: {str(e)}]"
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/plain")
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @router.get("/history", response_model=List[schemas.Chat])
 def get_chat_history(session_id: str, db: Session = Depends(get_db)):
