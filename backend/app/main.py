@@ -3,6 +3,13 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
+# Limit PyTorch and BLAS CPU threads to conserve memory and prevent container OOM on Render/Docker
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware

@@ -1,20 +1,22 @@
 import axios from 'axios';
 
 const getApiUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // If running locally, prioritize local backend unless NEXT_PUBLIC_API_URL is explicitly local on another port
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      if (process.env.NEXT_PUBLIC_API_URL?.includes('localhost') || process.env.NEXT_PUBLIC_API_URL?.includes('127.0.0.1')) {
-        return process.env.NEXT_PUBLIC_API_URL;
-      }
-      return 'http://localhost:8000';
-    }
-  }
+  // 1. Prioritize environment variable if explicitly configured
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  return 'http://localhost:8000';
+  
+  // 2. Client-side runtime detection
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If running on localhost/127.0.0.1, target the local backend
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://127.0.0.1:8000';
+    }
+  }
+  
+  // 3. Live production fallback (must be HTTPS to prevent Mixed Content block on Vercel)
+  return 'https://chatbot01-1.onrender.com';
 };
 
 const API_URL = getApiUrl();
