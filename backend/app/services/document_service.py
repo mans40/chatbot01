@@ -34,7 +34,7 @@ class DocumentService:
                 writer = csv.writer(f)
                 writer.writerow(["document_id", "filename", "file_path", "chunk_count", "ingested_at"])
 
-    def get_ingested_documents(self) -> List[Dict[str, Any]]:
+    def get_ingested_documents(self, skip_chroma: bool = True) -> List[Dict[str, Any]]:
         """Return list of ingested documents metadata using standard csv, with ChromaDB fallback."""
         try:
             documents_dict = {}
@@ -58,35 +58,36 @@ class DocumentService:
                     logger.error(f"Error reading metadata.csv: {csv_err}")
 
             # 2. Query ChromaDB to fetch any missing or previous uploads (robust fallback recovery)
-            from app.rag.rag_service import rag_service
-            if rag_service.collection:
-                try:
-                    results = rag_service.collection.get(include=["metadatas"])
-                    if results and "metadatas" in results and results["metadatas"]:
-                        counts = {}
-                        filenames = {}
-                        for meta in results["metadatas"]:
-                            if meta and ("source_id" in meta or "filename" in meta):
-                                fname = str(meta.get("filename", "unknown_manual"))
-                                s_id = str(meta.get("source_id", fname))
-                                counts[s_id] = counts.get(s_id, 0) + 1
-                                filenames[s_id] = fname
-                        
-                        # Merge into documents_dict
-                        for s_id, count in counts.items():
-                            if s_id not in documents_dict:
-                                timestamp_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-                                documents_dict[s_id] = {
-                                    "document_id": s_id,
-                                    "filename": filenames[s_id],
-                                    "file_path": "",
-                                    "chunk_count": count,
-                                    "ingested_at": timestamp_str
-                                }
-                                # Save to metadata.csv so it persists
-                                self.save_metadata(s_id, filenames[s_id], "", count)
-                except Exception as chroma_err:
-                    logger.error(f"Error restoring documents list from ChromaDB: {chroma_err}")
+            if not skip_chroma:
+                from app.rag.rag_service import rag_service
+                if rag_service.collection:
+                    try:
+                        results = rag_service.collection.get(include=["metadatas"])
+                        if results and "metadatas" in results and results["metadatas"]:
+                            counts = {}
+                            filenames = {}
+                            for meta in results["metadatas"]:
+                                if meta and ("source_id" in meta or "filename" in meta):
+                                    fname = str(meta.get("filename", "unknown_manual"))
+                                    s_id = str(meta.get("source_id", fname))
+                                    counts[s_id] = counts.get(s_id, 0) + 1
+                                    filenames[s_id] = fname
+                            
+                            # Merge into documents_dict
+                            for s_id, count in counts.items():
+                                if s_id not in documents_dict:
+                                    timestamp_str = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                                    documents_dict[s_id] = {
+                                        "document_id": s_id,
+                                        "filename": filenames[s_id],
+                                        "file_path": "",
+                                        "chunk_count": count,
+                                        "ingested_at": timestamp_str
+                                    }
+                                    # Save to metadata.csv so it persists
+                                    self.save_metadata(s_id, filenames[s_id], "", count)
+                    except Exception as chroma_err:
+                        logger.error(f"Error restoring documents list from ChromaDB: {chroma_err}")
             
             return list(documents_dict.values())
         except Exception as e:

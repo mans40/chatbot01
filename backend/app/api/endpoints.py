@@ -290,11 +290,11 @@ async def upload_document(
                 pass
 
 @router.get("/documents")
-def get_documents():
+def get_documents(sync: bool = False):
     """Fetch list of all ingested PDF and TXT files."""
     try:
         from app.services.document_service import document_service
-        return document_service.get_ingested_documents()
+        return document_service.get_ingested_documents(skip_chroma=not sync)
     except Exception as e:
         logger.error(f"Error fetching documents list: {e}")
         return []
