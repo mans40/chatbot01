@@ -1,15 +1,18 @@
 import axios from 'axios';
 
 const getApiUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    // If running on live Vercel domain, target the live Render API URL
-    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return 'https://chatbot01-1.onrender.com';
+    // If running locally, prioritize local backend unless NEXT_PUBLIC_API_URL is explicitly local on another port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      if (process.env.NEXT_PUBLIC_API_URL?.includes('localhost') || process.env.NEXT_PUBLIC_API_URL?.includes('127.0.0.1')) {
+        return process.env.NEXT_PUBLIC_API_URL;
+      }
+      return 'http://localhost:8000';
     }
+  }
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
   }
   return 'http://localhost:8000';
 };
@@ -61,6 +64,7 @@ export interface AnalyticsData {
 // Axios Instance
 const apiClient = axios.create({
   baseURL: API_URL,
+  timeout: 15000, // 15 seconds timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -146,6 +150,9 @@ export const api = {
     onChatIdDetected: (chatId: number) => void,
     onError: (err: any) => void
   ): Promise<void> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+
     try {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
@@ -156,7 +163,10 @@ export const api = {
           session_id: sessionId,
           message: message,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -194,8 +204,13 @@ export const api = {
         }
       }
     } catch (err: any) {
+      clearTimeout(timeoutId);
       logger.error('Streaming connection failed:', err);
-      onError(err);
+      if (err.name === 'AbortError') {
+        onError(new Error('Connection timed out. The server took too long to respond. Please ensure the backend is running.'));
+      } else {
+        onError(err);
+      }
     }
   },
 };
