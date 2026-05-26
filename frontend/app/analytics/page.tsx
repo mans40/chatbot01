@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
             <ShieldAlert className="h-10 w-10 text-rose-500 animate-bounce" />
             <div>
               <h3 className="font-display font-black text-slate-900 text-sm">Failed to Load Metrics</h3>
-              <p className="text-[11px] text-slate-550 mt-1 font-medium">Make sure the FastAPI backend server is active on localhost:8000.</p>
+              <p className="text-[11px] text-slate-550 mt-1 font-medium">Make sure the FastAPI backend server is active at {api.baseUrl}.</p>
             </div>
           </div>
         ) : (

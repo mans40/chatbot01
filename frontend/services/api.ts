@@ -1,6 +1,20 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const getApiUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If running on live Vercel domain, target the live Render API URL
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return 'https://chatbot01-1.onrender.com';
+    }
+  }
+  return 'http://localhost:8000';
+};
+
+const API_URL = getApiUrl();
 
 export interface ChatMessage {
   id?: number;
@@ -53,6 +67,7 @@ const apiClient = axios.create({
 });
 
 export const api = {
+  baseUrl: API_URL,
   /**
    * Fetch unique chat conversation sessions.
    */
