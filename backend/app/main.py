@@ -51,6 +51,8 @@ origins = [
     "http://localhost:3001",
     "https://chatbot01-green.vercel.app",
     "https://chatbot01-green.vercel.app/",
+    "https://aurachattt.vercel.app",
+    "https://aurachattt.vercel.app/",
 ]
 if settings.FRONTEND_URL:
     origins.append(settings.FRONTEND_URL)
