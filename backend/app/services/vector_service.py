@@ -43,8 +43,10 @@ class VectorService:
             return
         try:
             logger.info("Lazy initializing VectorService FAQ collection (SentenceTransformer in CPU mode)...")
-            # Set up the lightweight ONNX embedding function
-            self.embedding_function = embedding_functions.ONNXMiniLM_L6_V2()
+            # Reuse the shared embedding function from RAGService to prevent duplicate ONNX loads
+            from app.rag.rag_service import rag_service
+            rag_service.ensure_initialized()
+            self.embedding_function = rag_service.embedding_function
 
             # Initialize local ChromaDB Persistent Client
             os.makedirs(settings.CHROMA_PERSIST_DIR, exist_ok=True)

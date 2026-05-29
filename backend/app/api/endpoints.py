@@ -64,7 +64,7 @@ async def chat_endpoint(request: schemas.ChatRequest):
             # Retrieve ONLY top 2-3 most relevant chunks
             if rag_results:
                 for res in rag_results:
-                    if res["distance"] < 1.25:
+                    if res["distance"] < 1.5:
                         document_matches.append(res)
 
             # 5. Search over FAQ collection
@@ -291,7 +291,7 @@ async def upload_document(
                 pass
 
 @router.get("/documents")
-def get_documents(sync: bool = False):
+def get_documents(sync: bool = True):
     """Fetch list of all ingested PDF and TXT files."""
     try:
         from app.services.document_service import document_service

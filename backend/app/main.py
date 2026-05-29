@@ -83,6 +83,19 @@ app.add_middleware(
 # Include Router
 app.include_router(api_router, prefix="/api")
 
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Pre-initializing RAG and Vector services on startup...")
+    try:
+        from app.rag.rag_service import rag_service
+        from app.services.vector_service import vector_service
+        # Pre-initialize embedding function (shared) and persistent clients
+        rag_service.ensure_initialized()
+        vector_service.ensure_initialized()
+        logger.info("RAG and Vector services pre-initialized successfully.")
+    except Exception as e:
+        logger.error(f"Failed to pre-initialize services during startup: {e}")
+
 @app.get("/")
 @app.get("/health")
 def health_check():
