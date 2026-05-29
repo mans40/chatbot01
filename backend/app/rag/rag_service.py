@@ -1,6 +1,15 @@
 import os
 import logging
 from typing import List, Dict, Any, Optional
+
+# SQLite fix for ChromaDB
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 import chromadb
 from chromadb.utils import embedding_functions
 from pypdf import PdfReader

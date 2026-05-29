@@ -2,6 +2,14 @@ import os
 import json
 import logging
 from typing import Dict, Any, Optional, List
+
+# SQLite fix for ChromaDB
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
 import chromadb
 from chromadb.utils import embedding_functions
 from app.core.config import settings

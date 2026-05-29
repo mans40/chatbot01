@@ -1,4 +1,13 @@
 import os
+
+# SQLite fix for ChromaDB on platforms with older SQLite versions (like some Docker/Render environments)
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 # Force CPU execution and prevent CUDA initialization
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
