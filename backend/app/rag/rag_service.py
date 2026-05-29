@@ -54,10 +54,25 @@ class RAGService:
                 self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
 
             # Create or get the collection
-            self._collection = self.client.get_or_create_collection(
-                name="aurachat_documents",
-                embedding_function=self.embedding_function
-            )
+            try:
+                self._collection = self.client.get_or_create_collection(
+                    name="aurachat_documents",
+                    embedding_function=self.embedding_function
+                )
+            except ValueError as ve:
+                if "embedding function" in str(ve).lower():
+                    logger.warning("Embedding function conflict detected. Recreating collection 'aurachat_documents'...")
+                    try:
+                        self.client.delete_collection("aurachat_documents")
+                        self._collection = self.client.create_collection(
+                            name="aurachat_documents",
+                            embedding_function=self.embedding_function
+                        )
+                    except Exception as del_err:
+                        logger.error(f"Failed to recreate ChromaDB collection: {del_err}")
+                        raise del_err
+                else:
+                    raise ve
             logger.info("ChromaDB RAG collection initialized successfully.")
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB: {e}. RAG features will be bypassed.")

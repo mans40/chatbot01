@@ -181,13 +181,19 @@ class DocumentService:
 
     def extract_text_from_txt(self, file_path: str) -> str:
         """Extract all text contents from a TXT file."""
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                logger.info(f"Extracting text from TXT '{file_path}'.")
-                return f.read()
-        except Exception as e:
-            logger.error(f"Failed to read TXT {file_path}: {e}")
-            raise Exception(f"Failed to parse TXT document: {str(e)}")
+        encodings_to_try = ["utf-8", "windows-1252", "latin-1", "utf-16"]
+        for enc in encodings_to_try:
+            try:
+                with open(file_path, "r", encoding=enc) as f:
+                    text = f.read()
+                    logger.info(f"Successfully extracted text from TXT '{file_path}' using encoding '{enc}'.")
+                    return text
+            except UnicodeDecodeError:
+                continue
+            except Exception as e:
+                logger.error(f"Failed to read TXT {file_path} with encoding {enc}: {e}")
+                
+        raise Exception(f"Failed to parse TXT document: Could not decode file with any supported encoding (utf-8, windows-1252, etc).")
 
     def ingest_document(self, temp_file_path: str, filename: str, doc_id: str) -> Dict[str, Any]:
         """

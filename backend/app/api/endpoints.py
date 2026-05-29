@@ -281,7 +281,7 @@ async def upload_document(
 
     except Exception as e:
         logger.error(f"Error indexing document {file.filename}: {e}")
-        raise HTTPException(status_code=550, detail=f"Indexing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Indexing error: {str(e)}")
     finally:
         # Clean up temp file
         if os.path.exists(temp_file_path):
